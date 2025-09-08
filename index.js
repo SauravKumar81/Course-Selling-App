@@ -2,6 +2,7 @@ const express =require('express');
 const userRouter = require("./routes/user.route");
 const courseRouter = require("./routes/course.route");
 const adminRouter = require("./routes/admin.route");
+const db = require("./db/db");
 
 const  app = express();
 
