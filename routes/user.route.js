@@ -4,6 +4,7 @@ const { z } = require("zod");
 const { UserModel } = require("../db/db");
 const jwt = require("jsonwebtoken");
 const cookieParser = require('cookie-parser');
+const { authenticateUser } = require('../middleware/user.middleware');
 require("dotenv").config();
 
 
@@ -89,22 +90,6 @@ userRouter.post("/signin", async (req, res) => {
   }
 });
 
-const authenticateUser = (req, res, next) => {
-  const token = req.cookies.token;
-  
-  if (!token) {
-    return res.status(401).json({ message: "Authentication required" });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
-};
-
 userRouter.get("/profile", authenticateUser, async (req, res) => {
   try {
     const user = await UserModel.findById(req.userId);
@@ -114,7 +99,7 @@ userRouter.get("/profile", authenticateUser, async (req, res) => {
   }
 });
 
-userRouter.post("/logout", (req, res) => {
+userRouter.post("/logout", authenticateUser, (req, res) => {
   res.clearCookie('token');
   res.json({ message: "Logged out successfully" });
 });

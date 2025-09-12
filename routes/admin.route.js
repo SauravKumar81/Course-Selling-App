@@ -2,6 +2,7 @@ const { Router } = require("express");
 const { AdminModel, CourseModel, UserModel } = require("../db/db");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
+const { authenticateAdmin } = require('../middleware/admin.middleware');
 const adminRouter = Router();
 
 // Validation schemas
@@ -19,26 +20,7 @@ const courseSchema = z.object({
     imageLink: z.string().url()
 });
 
-// Admin Authentication Middleware
-const authenticateAdmin = async (req, res, next) => {
-    const token = req.cookies.adminToken;
-    
-    if (!token) {
-        return res.status(401).json({ message: "Admin authentication required" });
-    }
 
-    try {
-        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
-        const admin = await AdminModel.findById(decoded.id);
-        if (!admin) {
-            return res.status(401).json({ message: "Invalid admin token" });
-        }
-        req.adminId = decoded.id;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: "Invalid token" });
-    }
-};
 
 // Admin Auth Routes
 adminRouter.post("/signup", async (req, res) => {
