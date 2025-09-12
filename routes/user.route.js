@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const userRouter = Router();
 const { z } = require("zod");
-const { UserModel } = require("../db/db");
+const { UserModel, PurchaseModel } = require("../db/db");
 const jwt = require("jsonwebtoken");
 const cookieParser = require('cookie-parser');
 const { authenticateUser } = require('../middleware/user.middleware');
@@ -102,6 +102,64 @@ userRouter.get("/profile", authenticateUser, async (req, res) => {
 userRouter.post("/logout", authenticateUser, (req, res) => {
   res.clearCookie('token');
   res.json({ message: "Logged out successfully" });
+});
+
+// Get details of a specific purchased course
+userRouter.get("/purchase/:courseId", authenticateUser, async (req, res) => {
+    try {
+        const purchase = await PurchaseModel.findOne({
+            userID: req.userId,
+            courseID: req.params.courseId
+        }).populate('courseID');
+
+        if (!purchase) {
+            return res.status(404).json({
+                message: "You haven't purchased this course"
+            });
+        }
+
+        res.json({
+            purchaseInfo: {
+                purchaseDate: purchase._id.getTimestamp(),
+                status: "Active"
+            },
+            courseDetails: {
+                id: purchase.courseID._id,
+                title: purchase.courseID.title,
+                description: purchase.courseID.description,
+                price: purchase.courseID.price,
+                imageLink: purchase.courseID.imageLink
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching purchase details" });
+    }
+});
+
+// Get user's purchase history
+userRouter.get("/purchases", authenticateUser, async (req, res) => {
+  try {
+    const purchases = await PurchaseModel.find({ userID: req.userId })
+      .populate({
+        path: 'courseID',
+        select: 'title description price imageLink'
+      });
+
+    res.json({
+      totalPurchases: purchases.length,
+      purchases: purchases.map(purchase => ({
+        courseId: purchase.courseID._id,
+        title: purchase.courseID.title,
+        description: purchase.courseID.description,
+        price: purchase.courseID.price,
+        imageLink: purchase.courseID.imageLink,
+        purchaseDate: purchase._id.getTimestamp(),
+        status: "purchased"
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching purchase history" });
+  }
 });
 
 module.exports = userRouter;

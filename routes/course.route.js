@@ -3,11 +3,19 @@ const { CourseModel, PurchaseModel } = require("../db/db");
 const { authenticateUser } = require("../middleware/user.middleware");
 const courseRouter = Router();
 
-// Get all courses
-courseRouter.get("/all", async (req, res) => {
+// Get all courses preview
+courseRouter.get("/preview/all", async (req, res) => {
     try {
-        const courses = await CourseModel.find({}, { title: 1, price: 1, imageLink: 1 });
-        res.json(courses);
+        const courses = await CourseModel.find({}, {
+            title: 1,
+            description: 1,
+            price: 1,
+            imageLink: 1
+        });
+        res.json({
+            courses,
+            message: "These are course previews. Purchase a course for full access."
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
