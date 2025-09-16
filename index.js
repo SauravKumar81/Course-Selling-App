@@ -19,7 +19,7 @@ app.use("/api/v1/course",courseRouter);
 
 async function connectToDB(){
     try {
-        await mongoose.connect(process.env.mongo_uri);
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log("Successfully connected to MongoDB");
         app.listen(3000, () => {
             console.log("Server is running on port 3000");
